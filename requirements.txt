@@ -2,3 +2,4 @@ colorama
 pyautogui
 pillow
 opencv-python
+imagehash
