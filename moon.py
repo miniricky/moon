@@ -1,6 +1,7 @@
 
 from colorama import Fore, Back, Style, init
 from PIL import Image
+import cv2
 import numpy as np
 import subprocess
 import argparse
@@ -29,10 +30,24 @@ def init_moon_browser(windows_user, profile_directory):
         profile_arg
     ]
 
-    process = subprocess.Popen(command)
-    return process
+    subprocess.Popen(command)
 
-def init_roll(process, confidence_level=0.9):
+def search_moon():
+    y = random.randint(50, 70)
+    x = random.randint(196, 470)
+    
+    move_to_location(x, y)
+
+    pyautogui.typewrite('https://earnbitmoon.club/', interval=0.1)
+    pyautogui.press('enter')
+
+    time.sleep(5)
+
+def move_to_location(x, y):
+    pyautogui.moveTo(x, y, duration=random.uniform(0.5, 2.0))
+    pyautogui.click()
+
+def init_roll(confidence_level=0.9):
     image_roll = 'images/roll.png'
     image_roll_location = pyautogui.locateOnScreen(image_roll, confidence=confidence_level)
     
@@ -66,9 +81,7 @@ def init_roll(process, confidence_level=0.9):
                 screenshot.save('captcha/icons.png')
                 print(f"Captura guardada en 'captcha/icons.png'")
 
-                split_image()
-
-                num_parts = 5
+                num_parts = split_image()
                 min_pairs = float('inf')
                 min_icon = None
 
@@ -88,6 +101,7 @@ def init_roll(process, confidence_level=0.9):
                     print(f"Imagen Roll encontrada")
                     pyautogui.moveTo(icon_locaton, duration=random.uniform(0.5, 2.0))
                     pyautogui.click()
+                    time.sleep(random.randint(3, 4))
 
                     image_press = 'images/press.png'
                     image_press = pyautogui.locateOnScreen(image_press, confidence=confidence_level)
@@ -96,17 +110,17 @@ def init_roll(process, confidence_level=0.9):
                         print(f"Imagen Press encontrada")
                         pyautogui.moveTo(image_press, duration=random.uniform(0.5, 2.0))
                         pyautogui.click()
-                        time.sleep(random.randint(1, 2))
+                        time.sleep(random.randint(2, 3))
 
-    close_browser(process)
+    close_browser()
 
-# # Save each part as a new image
+#Save each part as a new image
 def split_image():
     image_path = 'captcha/icons.png'
     image = Image.open(image_path)
 
     width, height = image.size
-    num_parts = 5
+    num_parts = count_icons(image_path)
     part_width = width // num_parts
 
     for i in range(num_parts):
@@ -120,6 +134,29 @@ def split_image():
         part.save(f'captcha/icon_{i + 1}.png')
         print(f"Parte {i + 1} guardada en 'captcha/icon_{i + 1}.png'")
 
+    return num_parts
+
+# Get the number of icons
+def count_icons(image_path):
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                   cv2.THRESH_BINARY_INV, 11, 2)
+
+    kernel = np.ones((5, 5), np.uint8)
+    dilated = cv2.dilate(thresh, kernel, iterations=1)
+    
+    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    min_contour_area = 500
+    valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
+    
+    num_icons = len(valid_contours)
+    
+    return num_icons
+
 # Convert image to grayscale
 def convert_to_grayscale(image):
     image_gray = image.convert('L')
@@ -127,26 +164,10 @@ def convert_to_grayscale(image):
     non_white_pixels = np.sum(image_array < 255)
     
     return non_white_pixels
-
-def search_moon():
-    y = random.randint(50, 70)
-    x = random.randint(196, 470)
     
-    move_to_location(x, y)
-
-    pyautogui.typewrite('https://earnbitmoon.club/', interval=0.1)
-    pyautogui.press('enter')
-
-    time.sleep(10)
-
-def move_to_location(x, y):
-    pyautogui.moveTo(x, y, duration=random.uniform(0.5, 2.0))
-    pyautogui.click()
-
-    
-def close_browser(process):
+def close_browser():
     try:
-        process.terminate()
+        pyautogui.hotkey('alt', 'f4')
         print("Navegador cerrado exitosamente.")
     except Exception as e:
         print(f"Error al cerrar el navegador: {e}")
@@ -154,8 +175,8 @@ def close_browser(process):
 # Run the search
 if __name__ == "__main__":
     args = parse_arguments()
-    process = init_moon_browser(args.windows_user, args.profile_directory)
-    time.sleep(random.randint(1, 2))
+    init_moon_browser(args.windows_user, args.profile_directory)
+    time.sleep(random.randint(2, 3))
 
     search_moon()
-    init_roll(process)
+    init_roll()
