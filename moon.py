@@ -1,6 +1,8 @@
 
 from colorama import Fore, Back, Style, init
 from PIL import Image
+import imagehash
+import collections
 import cv2
 import numpy as np
 import subprocess
@@ -47,7 +49,7 @@ def move_to_location(x, y):
     pyautogui.moveTo(x, y, duration=random.uniform(0.5, 2.0))
     pyautogui.click()
 
-def init_roll(confidence_level=0.9):
+def init_roll(confidence_level=0.9, threshold=500):
     image_roll = 'images/roll.png'
     image_roll_location = pyautogui.locateOnScreen(image_roll, confidence=confidence_level)
     
@@ -55,7 +57,7 @@ def init_roll(confidence_level=0.9):
         print(f"Imagen Roll encontrada")
         pyautogui.moveTo(image_roll_location, duration=random.uniform(0.5, 2.0))
         pyautogui.click()
-        time.sleep(random.randint(1, 2))
+        time.sleep(random.randint(4, 5))
 
         image_verify = 'images/verify.png'
         image_verify_location = pyautogui.locateOnScreen(image_verify, confidence=confidence_level)
@@ -64,7 +66,7 @@ def init_roll(confidence_level=0.9):
             print(f"Imagen Verify encontrada")
             pyautogui.moveTo(image_verify_location, duration=random.uniform(0.5, 2.0))
             pyautogui.click()
-            time.sleep(random.randint(1, 2))
+            time.sleep(random.randint(4, 5))
 
             image_text = 'images/text.png'
             image_text_location = pyautogui.locateOnScreen(image_text, confidence=confidence_level)
@@ -83,28 +85,32 @@ def init_roll(confidence_level=0.9):
 
                 num_parts = split_image()
 
-                print(num_parts)
-
-                min_pairs = float('inf')
-                min_icon = None
+                pair_counts = {}
 
                 for i in range(1, num_parts):
-                    icon_path = f'captcha/icon_{i}.png'
-                    icon_image = Image.open(icon_path)
+                    icon_path_1 = f'captcha/icon_{i}.png'
+                    pair_counts[icon_path_1] = 0
                     
-                    non_white_pixels = convert_to_grayscale(icon_image)
-                    print(f"Icono {i} tiene {non_white_pixels} píxeles no blancos")
-                    
-                    if non_white_pixels < min_pairs:
-                        min_pairs = non_white_pixels
-                        min_icon = icon_path
+                    for j in range(1, num_parts):
+                        if i != j:
+                            icon_path_2 = f'captcha/icon_{j}.png'
+                            
+                            # Check if the images are similar
+                            if compare_images(icon_path_1, icon_path_2, threshold):
+                                pair_counts[icon_path_1] += 1
 
-                icon_locaton = pyautogui.locateOnScreen(min_icon, confidence=confidence_level)
+                # Find the image with the least number of pairs
+                least_paired_icon = min(pair_counts, key=pair_counts.get)
+                min_pairs = pair_counts[least_paired_icon]
+
+                print(f"El icono con menos pares es: {least_paired_icon} con {min_pairs} pares.")
+
+                icon_locaton = pyautogui.locateOnScreen(least_paired_icon, confidence=confidence_level)
                 if icon_locaton:
                     print(f"Imagen Roll encontrada")
                     pyautogui.moveTo(icon_locaton, duration=random.uniform(0.5, 2.0))
                     pyautogui.click()
-                    time.sleep(random.randint(3, 4))
+                    time.sleep(random.randint(4, 5))
 
                     image_press = 'images/press.png'
                     image_press = pyautogui.locateOnScreen(image_press, confidence=confidence_level)
@@ -163,17 +169,19 @@ def split_image(fixed_width=55, fixed_height=55):
 
     return icon_num
 
-# Convert image to grayscale
-def convert_to_grayscale(image):
-    image_gray = image.convert('L')
-    image_array = np.array(image_gray)
-    non_white_pixels = np.sum(image_array < 255)
+def compare_images(image1_path, image2_path, threshold=500):
+    img1 = cv2.imread(image1_path, 0)
+    img2 = cv2.imread(image2_path, 0)
+
+    diff = cv2.absdiff(img1, img2)
+
+    non_zero_count = np.count_nonzero(diff)
     
-    return non_white_pixels
+    return non_zero_count < threshold
     
 def close_browser():
     try:
-        pyautogui.hotkey('alt', 'f4')
+        #pyautogui.hotkey('alt', 'f4')
         print("Navegador cerrado exitosamente.")
     except Exception as e:
         print(f"Error al cerrar el navegador: {e}")
