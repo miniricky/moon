@@ -1,28 +1,39 @@
-
-from colorama import Fore, Back, Style, init
-from PIL import Image
-import imagehash
-import collections
+import argparse
 import cv2
 import numpy as np
-import subprocess
-import argparse
-import random
-import time
+import os
 import pyautogui
+import random
+import subprocess
+import telebot
+import time
+from colorama import Fore, Back, Style, init
+from PIL import Image
+
+TOKEN = '7517601793:AAEOKrkom7DWB13skzKUETr9aT7YCgBCJzw'
+CHAT_ID = '505309958'
+
+bot = telebot.TeleBot(TOKEN)
+
+#Send messge to telegram
+def send_status_update(message):
+    try:
+        bot.send_message(CHAT_ID, message)
+    except Exception as e:
+        print(f"Error al enviar mensaje de Telegram: {e}")
 
 # Argument parser for widows user and directory
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Swash script with Chrome profile and user data directory')
-    parser.add_argument('--windows-user', required=True, help='Windows User')
     parser.add_argument('--profile-directory', required=True, help='Chrome profile directory name')
     return parser.parse_args()
 
 # Configure the swash browser
-def init_moon_browser(windows_user, profile_directory):
+def init_moon_browser(profile):
+    user_name = os.getlogin()
     browser_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-    user_data_dir = f"C:/Users/{windows_user}/AppData/Local/Google/Chrome/User Data"
-    profile_arg = f"--profile-directory={profile_directory}"
+    user_data_dir = f"C:/Users/{user_name}/AppData/Local/Google/Chrome/User Data"
+    profile_arg = f"--profile-directory=Profile {profile}"
 
     # Command to open the browser with the profile
     command = [
@@ -33,7 +44,9 @@ def init_moon_browser(windows_user, profile_directory):
     ]
 
     subprocess.Popen(command)
+    return user_name
 
+# Navigates to the specific URL and prepares for further actions
 def search_moon():
     y = random.randint(50, 70)
     x = random.randint(196, 470)
@@ -43,87 +56,197 @@ def search_moon():
     pyautogui.typewrite('https://earnbitmoon.club/', interval=0.1)
     pyautogui.press('enter')
 
-    time.sleep(5)
+    time.sleep(random.randint(1, 2))
 
+# Moves the mouse cursor to a specific location
 def move_to_location(x, y):
     pyautogui.moveTo(x, y, duration=random.uniform(0.5, 2.0))
     pyautogui.click()
 
-def init_roll(confidence_level=0.9, threshold=500):
+# Initialize the roll functionality, attempting to find and click the 'Roll' image and verify captcha
+def init_roll(confidence_level=0.9, threshold=500, max_attempts=5):
     image_roll = 'images/roll.png'
-    image_roll_location = pyautogui.locateOnScreen(image_roll, confidence=confidence_level)
-    
-    if image_roll_location:
-        print(f"Imagen Roll encontrada")
-        pyautogui.moveTo(image_roll_location, duration=random.uniform(0.5, 2.0))
-        pyautogui.click()
-        time.sleep(random.randint(4, 5))
+    attempts = 0
+    image_roll_location = None
 
-        image_verify = 'images/verify.png'
-        image_verify_location = pyautogui.locateOnScreen(image_verify, confidence=confidence_level)
+    while attempts < max_attempts:
+        try:
+            image_roll_location = pyautogui.locateOnScreen(image_roll, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_roll_location = None
         
+        if image_roll_location:
+            print(f"Imagen Roll encontrada")
+            pyautogui.moveTo(image_roll_location, duration=random.uniform(0.5, 1.5))
+            pyautogui.click()
+            time.sleep(random.randint(1, 2))
+            break
+        else:
+            print(f"Imagen Roll no encontrada, reintentando en 1 segundo... ({attempts+1}/{max_attempts})")
+            time.sleep(1)
+            attempts += 1
+
+    if not image_roll_location:
+        print(f"No se pudo encontrar la imagen Roll después de varios intentos.")
+        return
+
+    image_verify = 'images/verify.png'
+    attempts = 0
+    image_verify_location = None
+    
+    while attempts < max_attempts:
+        try:
+            image_verify_location = pyautogui.locateOnScreen(image_verify, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_verify_location = None
+            
         if image_verify_location:
             print(f"Imagen Verify encontrada")
-            pyautogui.moveTo(image_verify_location, duration=random.uniform(0.5, 2.0))
+            pyautogui.moveTo(image_verify_location, duration=random.uniform(0.5, 1.0))
             pyautogui.click()
-            time.sleep(random.randint(4, 5))
+            time.sleep(random.randint(3, 4))
+            break
+        else:
+            print(f"Imagen Verify no encontrada, reintentando en 1 segundo... ({attempts+1}/{max_attempts})")
+            time.sleep(1)
+            attempts += 1
 
-            image_text = 'images/text.png'
+    if not image_verify_location:
+        print("No se pudo encontrar la imagen Verify después de varios intentos.")
+        return
+
+    response = solve_captcha()
+    if response:
+        return
+             
+    image_mistake = 'images/mistake.png'
+    attempts = 0
+    image_mistake_location = None
+
+    while attempts < max_attempts:
+        try:
+            image_mistake_location = pyautogui.locateOnScreen(image_mistake, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_mistake_location = None
+        
+        if image_mistake_location:
+            print(f"hubo un error al resolver el icon captcha, reintentando en 3 segundos... ({attempts+1}/{max_attempts})")
+            solve_captcha()
+            time.sleep(3)
+            attempts += 1
+        else:
+            break
+
+# Handles the captcha solution process by identifying similar images
+def solve_captcha(confidence_level=0.9, threshold=500, max_attempts=5):
+    image_text = 'images/text.png'
+    attempts = 0
+    image_text_location = None
+    response = 'true'
+    
+    while attempts < max_attempts:
+        try:
             image_text_location = pyautogui.locateOnScreen(image_text, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_text_location = None
 
-            if image_text_location:
-                top, left, width, height = image_text_location
+        if image_text_location:
+            top, left, width, height = image_text_location
 
-                left = int(left + 41)
-                top = int(top)
-                width = int(width)
-                height = int(55)
+            left = int(left + 41)
+            top = int(top)
+            width = int(width)
+            height = int(55)
 
-                screenshot = pyautogui.screenshot(region=(top, left, width, height))
-                screenshot.save('captcha/icons.png')
-                print(f"Captura guardada en 'captcha/icons.png'")
+            screenshot = pyautogui.screenshot(region=(top, left, width, height))
+            screenshot.save('captcha/icons.png')
+            print(f"Captura guardada en 'captcha/icons.png'")
+            break
+        else:
+            print(f"Imagen Text no encontrada, reintentando en 1 segundo... ({attempts+1}/{max_attempts})")
+            time.sleep(1)
+            attempts += 1
+    
+    if not image_text_location:
+        print(f"No se pudo encontrar la imagen Text después de varios intentos.")
+        response = None
+        return response
 
-                num_parts = split_image()
+    num_parts = split_image()
 
-                pair_counts = {}
+    pair_counts = {}
 
-                for i in range(1, num_parts):
-                    icon_path_1 = f'captcha/icon_{i}.png'
-                    pair_counts[icon_path_1] = 0
-                    
-                    for j in range(1, num_parts):
-                        if i != j:
-                            icon_path_2 = f'captcha/icon_{j}.png'
-                            
-                            # Check if the images are similar
-                            if compare_images(icon_path_1, icon_path_2, threshold):
-                                pair_counts[icon_path_1] += 1
+    for i in range(1, num_parts):
+        icon_path_1 = f'captcha/icon_{i}.png'
+        pair_counts[icon_path_1] = 0
+        
+        for j in range(1, num_parts):
+            if i != j:
+                icon_path_2 = f'captcha/icon_{j}.png'
+                
+                # Check if the images are similar
+                if compare_images(icon_path_1, icon_path_2, threshold):
+                    pair_counts[icon_path_1] += 1
 
-                # Find the image with the least number of pairs
-                least_paired_icon = min(pair_counts, key=pair_counts.get)
-                min_pairs = pair_counts[least_paired_icon]
+    # Find the image with the least number of pairs
+    least_paired_icon = min(pair_counts, key=pair_counts.get)
+    min_pairs = pair_counts[least_paired_icon]
 
-                print(f"El icono con menos pares es: {least_paired_icon} con {min_pairs} pares.")
+    print(f"El icono con menos pares es: {least_paired_icon} con {min_pairs} pares.")
 
-                icon_locaton = pyautogui.locateOnScreen(least_paired_icon, confidence=confidence_level)
-                if icon_locaton:
-                    print(f"Imagen Roll encontrada")
-                    pyautogui.moveTo(icon_locaton, duration=random.uniform(0.5, 2.0))
-                    pyautogui.click()
-                    time.sleep(random.randint(4, 5))
+    attempts = 0
+    image_icon_location = None
 
-                    image_press = 'images/press.png'
-                    image_press = pyautogui.locateOnScreen(image_press, confidence=confidence_level)
+    while attempts < max_attempts:
+        try:
+            image_icon_location = pyautogui.locateOnScreen(least_paired_icon, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_icon_location = None
 
-                    if image_press:
-                        print(f"Imagen Press encontrada")
-                        pyautogui.moveTo(image_press, duration=random.uniform(0.5, 2.0))
-                        pyautogui.click()
-                        time.sleep(random.randint(4, 5))
+        if image_icon_location:
+            print(f"Imagen Icon encontrada")
+            pyautogui.moveTo(image_icon_location, duration=random.uniform(0.5, 1.0))
+            pyautogui.click()
+            time.sleep(random.randint(3, 4))
+            break
+        else:
+            print(f"Imagen Icon no encontrada, reintentando en 2 segundos... ({attempts+1}/{max_attempts})")
+            time.sleep(2)
+            attempts += 1
+    
+    if not image_icon_location:
+        print(f"No se pudo encontrar la imagen Icon después de varios intentos.")
+        response = None
+        
+        return response
+    
+    image_press = 'images/press.png'
+    attempts = 0
+    image_press_location = None
 
-    close_browser()
+    while attempts < max_attempts:
+        try:
+            image_press_location = pyautogui.locateOnScreen(image_press, confidence=confidence_level)
+        except pyautogui.ImageNotFoundException:
+            image_press_location = None
+        
+        if image_press_location:
+            print(f"Imagen Press encontrada")
+            pyautogui.moveTo(image_press_location, duration=random.uniform(0.5, 1.0))
+            pyautogui.click()
+            time.sleep(random.randint(2, 3))
+            break
+        else:
+            print(f"Imagen Press no encontrada, reintentando en 1 segundo... ({attempts+1}/{max_attempts})")
+            time.sleep(1)
+            attempts += 1
 
-#Save each part as a new image
+    if not image_press_location:
+        print(f"No se pudo encontrar la imagen Press después de varios intentos.")
+        response = None
+        return response
+
+# Save each part of the captcha as a separate image
 def split_image(fixed_width=55, fixed_height=55):
     image_path = 'captcha/icons.png'
     image = cv2.imread(image_path)
@@ -169,6 +292,7 @@ def split_image(fixed_width=55, fixed_height=55):
 
     return icon_num
 
+# Compare two images and return whether they are similar based on their histogram
 def compare_images(image1_path, image2_path, threshold=500):
     img1 = cv2.imread(image1_path, 0)
     img2 = cv2.imread(image2_path, 0)
@@ -181,16 +305,66 @@ def compare_images(image1_path, image2_path, threshold=500):
     
 def close_browser():
     try:
-        #pyautogui.hotkey('alt', 'f4')
-        print("Navegador cerrado exitosamente.")
+        pyautogui.hotkey('alt', 'f4')
+        print(f"Navegador cerrado exitosamente.")
     except Exception as e:
         print(f"Error al cerrar el navegador: {e}")
 
-# Run the search
-if __name__ == "__main__":
+def main():   
     args = parse_arguments()
-    init_moon_browser(args.windows_user, args.profile_directory)
-    time.sleep(random.randint(2, 3))
+    profile_list = [item.strip() for item in args.profile_directory.split(",")]
 
-    search_moon()
-    init_roll()
+    time_list = {
+        1: "5",
+        2: "2.5",
+        3: "1.6",
+        4: "1.25",
+        5: "1"
+    }
+
+    index = 0
+    count = len(profile_list)
+    seconds = int(time_list[count])
+    minutes = seconds * 60 
+    while True:
+        profile = profile_list[index]
+        user_name = init_moon_browser(profile)
+        time.sleep(random.randint(2, 3))
+
+        search_moon()
+        init_roll()
+
+        image_expired = 'images/expired.png'
+        attempts = 0
+        max_attempts = 3
+        confidence_level=0.9
+        image_expired_location = None
+
+        while attempts < max_attempts:
+            try:
+                image_expired_location = pyautogui.locateOnScreen(image_expired, confidence=confidence_level)
+            except pyautogui.ImageNotFoundException:
+                image_expired_location = None
+            
+            if image_expired_location:
+                print(f"hubo un error al cargar el icon captcha, reintentando en 3 segundos... ({attempts+1}/{max_attempts})")
+                pyautogui.hotkey('ctrl', 'r')
+                time.sleep(random.randint(1, 2))
+                init_roll()
+                attempts += 1
+            else:
+                break
+
+        close_browser()
+        send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile}.')
+
+        if count >= index:
+            index = 0
+        else:
+            index += 1
+
+        time.sleep(minutes)
+
+# Init the script
+if __name__ == "__main__":
+    main()

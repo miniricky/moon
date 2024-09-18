@@ -1,5 +1,6 @@
 colorama
-pyautogui
-pillow
+numpy
 opencv-python
-imagehash
+pillow
+pyautogui
+pyTelegramBotAPI
