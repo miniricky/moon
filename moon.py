@@ -70,6 +70,7 @@ def init_roll(confidence_level=0.9, threshold=500, max_attempts=5):
     image_roll = 'images/roll.png'
     attempts = 0
     image_roll_location = None
+    roll = True
 
     while attempts < max_attempts:
         try:
@@ -90,7 +91,8 @@ def init_roll(confidence_level=0.9, threshold=500, max_attempts=5):
 
     if not image_roll_location:
         print(f"No se pudo encontrar la imagen Roll después de varios intentos.")
-        return
+        roll = None
+        return roll
 
     image_verify = 'images/verify.png'
     attempts = 0
@@ -115,10 +117,11 @@ def init_roll(confidence_level=0.9, threshold=500, max_attempts=5):
 
     if not image_verify_location:
         print("No se pudo encontrar la imagen Verify después de varios intentos.")
-        return
+        roll = None
+        return roll
 
     response = solve_captcha()
-    if response:
+    if not response:
         return
              
     image_mistake = 'images/mistake.png'
@@ -138,13 +141,15 @@ def init_roll(confidence_level=0.9, threshold=500, max_attempts=5):
             attempts += 1
         else:
             break
+    
+    return roll
 
 # Handles the captcha solution process by identifying similar images
 def solve_captcha(confidence_level=0.9, threshold=500, max_attempts=5):
     image_text = 'images/text.png'
     attempts = 0
     image_text_location = None
-    response = 'true'
+    response = True
     
     while attempts < max_attempts:
         try:
@@ -219,7 +224,6 @@ def solve_captcha(confidence_level=0.9, threshold=500, max_attempts=5):
     if not image_icon_location:
         print(f"No se pudo encontrar la imagen Icon después de varios intentos.")
         response = None
-        
         return response
     
     image_press = 'images/press.png'
@@ -247,6 +251,8 @@ def solve_captcha(confidence_level=0.9, threshold=500, max_attempts=5):
         print(f"No se pudo encontrar la imagen Press después de varios intentos.")
         response = None
         return response
+    
+    return response
 
 # Save each part of the captcha as a separate image
 def split_image(fixed_width=55, fixed_height=55):
@@ -360,7 +366,7 @@ def main():
         time.sleep(random.randint(2, 3))
 
         search_moon()
-        init_roll()
+        roll = init_roll()
 
         image_expired = 'images/expired.png'
         attempts = 0
@@ -384,7 +390,9 @@ def main():
                 break
 
         close_browser()
-        send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile} en el pais {country}.')
+
+        if roll:
+            send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile} en el pais {country}.')
 
         if vpn_process:
             disconnect_vpn(vpn_process)
