@@ -1,6 +1,4 @@
 colorama
-numpy
 opencv-python
-pillow
-pyautogui
 pyTelegramBotAPI
+requests

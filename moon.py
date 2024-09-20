@@ -343,6 +343,8 @@ def main():
     seconds = float(time_list[count])
     minutes = int(seconds * 60)
     while True:
+        start_time = time.time()
+       
         # Connect openvpn
         vpn_process = None
 
@@ -401,6 +403,12 @@ def main():
             index = 0
         else:
             index += 1
+
+        end_time = time.time()
+        execution_time = int((end_time - start_time) * 60)
+        
+        if minutes > execution_time:
+            int(minutes - execution_time)
 
         time.sleep(minutes)
 
