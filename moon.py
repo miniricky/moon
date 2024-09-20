@@ -325,17 +325,18 @@ def main():
 
     time_list = {
         1: "5",
-        2: "2.5",
-        3: "1.6",
-        4: "1.25",
-        5: "1"
+        2: "2.7",
+        3: "1.8",
+        4: "1.45",
+        5: "1.20"
     }
 
     ovpn_list = {
         1: "us-free-104063.protonvpn.udp.ovpn",
         2: "us-free-113078.protonvpn.udp.ovpn",
         3: "us-free-110062.protonvpn.udp.ovpn",
-        4: "us-free-108069.protonvpn.udp.ovpn"
+        4: "us-free-108069.protonvpn.udp.ovpn",
+        5: "us-free-114155.protonvpn.udp.ovpn"
     }
 
     index = 0
@@ -344,6 +345,7 @@ def main():
     minutes = int(seconds * 60)
     while True:
         start_time = time.time()
+        minutes_sleep = minutes
        
         # Connect openvpn
         vpn_process = None
@@ -365,7 +367,7 @@ def main():
 
         profile = profile_list[index]
         init_moon_browser(user_name, profile)
-        time.sleep(random.randint(2, 3))
+        time.sleep(random.randint(3, 4))
 
         search_moon()
         roll = init_roll()
@@ -394,7 +396,7 @@ def main():
         close_browser()
 
         if roll:
-            send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile} en el pais {country}.')
+            send_status_update(f'Claim: {user_name} - perfil {profile} - región {country}.')
 
         if vpn_process:
             disconnect_vpn(vpn_process)
@@ -405,12 +407,16 @@ def main():
             index += 1
 
         end_time = time.time()
-        execution_time = int((end_time - start_time) * 60)
+        execution_time = int(end_time - start_time)
         
-        if minutes > execution_time:
-            int(minutes - execution_time)
+        print(f"Terminó en {execution_time}")
+        if minutes_sleep > execution_time:
+            minutes_sleep = int(minutes_sleep - execution_time)
+        else:
+            minutes_sleep = int(0)
 
-        time.sleep(minutes)
+        print(f"Siguiente perfil en {minutes_sleep}")
+        time.sleep(minutes_sleep)
 
 # Init the script
 if __name__ == "__main__":
