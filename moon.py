@@ -4,11 +4,15 @@ import numpy as np
 import os
 import pyautogui
 import random
+import requests
 import subprocess
 import telebot
 import time
 from colorama import Fore, Back, Style, init
 from PIL import Image
+
+# Import the functions from openvpn
+from openvpn import connect_vpn, disconnect_vpn
 
 TOKEN = '7517601793:AAEOKrkom7DWB13skzKUETr9aT7YCgBCJzw'
 CHAT_ID = '505309958'
@@ -29,8 +33,7 @@ def parse_arguments():
     return parser.parse_args()
 
 # Configure the swash browser
-def init_moon_browser(profile):
-    user_name = os.getlogin()
+def init_moon_browser(user_name, profile):
     browser_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
     user_data_dir = f"C:/Users/{user_name}/AppData/Local/Google/Chrome/User Data"
     profile_arg = f"--profile-directory=Profile {profile}"
@@ -44,7 +47,6 @@ def init_moon_browser(profile):
     ]
 
     subprocess.Popen(command)
-    return user_name
 
 # Navigates to the specific URL and prepares for further actions
 def search_moon():
@@ -311,6 +313,7 @@ def close_browser():
         print(f"Error al cerrar el navegador: {e}")
 
 def main():   
+    user_name = os.getlogin()
     args = parse_arguments()
     profile_list = [item.strip() for item in args.profile_directory.split(",")]
 
@@ -322,13 +325,38 @@ def main():
         5: "1"
     }
 
+    ovpn_list = {
+        1: "us-free-104063.protonvpn.udp.ovpn",
+        2: "us-free-113078.protonvpn.udp.ovpn",
+        3: "us-free-110062.protonvpn.udp.ovpn",
+        4: "us-free-108069.protonvpn.udp.ovpn"
+    }
+
     index = 0
     count = len(profile_list)
-    seconds = int(time_list[count])
-    minutes = seconds * 60 
+    seconds = float(time_list[count])
+    minutes = int(seconds * 60)
     while True:
+        # Connect openvpn
+        vpn_process = None
+
+        if index > 0:
+            vpn_config = f'C:/Users/{user_name}/OpenVPN/config/{ovpn_list[index]}'
+            auth_file = f'C:/Users/{user_name}/OpenVPN/config/credentials.txt'
+
+            # Connect to the VPN
+            vpn_process = connect_vpn(vpn_config, auth_file)
+        
+            if not vpn_process:
+                break    
+        
+        # Get the public IP with ipinfo.io and geolocation information
+        response = requests.get('https://ipinfo.io')
+        data = response.json()
+        country = data.get('country', 'N/A')
+
         profile = profile_list[index]
-        user_name = init_moon_browser(profile)
+        init_moon_browser(user_name, profile)
         time.sleep(random.randint(2, 3))
 
         search_moon()
@@ -356,9 +384,12 @@ def main():
                 break
 
         close_browser()
-        send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile}.')
+        send_status_update(f'{user_name} reclamó la faucet correctamente con el perfil {profile} en el pais {country}.')
 
-        if count >= index:
+        if vpn_process:
+            disconnect_vpn(vpn_process)
+
+        if index + 1 == count:
             index = 0
         else:
             index += 1
