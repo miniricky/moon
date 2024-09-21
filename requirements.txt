@@ -2,3 +2,4 @@ colorama
 opencv-python
 pyTelegramBotAPI
 requests
+pyautogui

@@ -257,6 +257,12 @@ def solve_captcha(confidence_level=0.9, threshold=500, max_attempts=5):
 # Save each part of the captcha as a separate image
 def split_image(fixed_width=55, fixed_height=55):
     image_path = 'captcha/icons.png'
+
+    # Check if the captcha folder exists, if not, create it
+    if not os.path.exists('captcha'):
+        os.makedirs('captcha')
+        print("Carpeta 'captcha' creada.")
+
     image = cv2.imread(image_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -367,7 +373,7 @@ def main():
 
         profile = profile_list[index]
         init_moon_browser(user_name, profile)
-        time.sleep(random.randint(3, 4))
+        time.sleep(random.randint(4, 5))
 
         search_moon()
         roll = init_roll()
