@@ -1,6 +1,4 @@
 import subprocess
-import time
-import os
 
 # Function to start the VPN connection
 def connect_vpn(vpn_config_file, auth_file):
