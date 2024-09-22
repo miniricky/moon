@@ -20,7 +20,7 @@ def connect_vpn(vpn_config_file, auth_file):
             if "AUTH_FAILED" in output:
                 print("VPN Authentication failed.")
                 process.terminate()
-                return None
+                return process
                 
             # Verifica si el proceso terminó
             if process.poll() is not None:
