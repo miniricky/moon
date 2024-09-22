@@ -406,6 +406,7 @@ def main():
 
         if vpn_process:
             disconnect_vpn(vpn_process)
+            time.sleep(random.randint(3, 4))
 
         if index + 1 == count:
             index = 0
@@ -419,7 +420,7 @@ def main():
         if minutes_sleep > execution_time:
             minutes_sleep = int(minutes_sleep - execution_time)
         else:
-            minutes_sleep = int(0)
+            minutes_sleep = int(random.randint(4, 5))
 
         print(f"Siguiente perfil en {minutes_sleep}")
         time.sleep(minutes_sleep)
