@@ -16,10 +16,15 @@ def connect_vpn(vpn_config_file, auth_file):
         # Read and print stdout and stderr line by line in real-time
         while True:
             output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                print(f"OUTPUT: {output.strip()}")
+            if "AUTH_FAILED" in output:
+                print("VPN Authentication failed.")
+                process.terminate()
+                return None
+            
+            # Verifica si el proceso terminó
+            if process.poll() is not None:
+                print("VPN process exited unexpectedly.")
+                return None
                 
             # Check for successful connection message
             if "Initialization Sequence Completed" in output:

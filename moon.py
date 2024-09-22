@@ -28,11 +28,11 @@ def send_status_update(message):
 
 # Argument parser for widows user and directory
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Swash script with Chrome profile and user data directory')
+    parser = argparse.ArgumentParser(description='Moon script with Chrome profile and user data directory')
     parser.add_argument('--profile-directory', required=True, help='Chrome profile directory name')
     return parser.parse_args()
 
-# Configure the swash browser
+# Configure the moon browser
 def init_moon_browser(user_name, profile):
     browser_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
     user_data_dir = f"C:/Users/{user_name}/AppData/Local/Google/Chrome/User Data"
