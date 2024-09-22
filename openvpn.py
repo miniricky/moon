@@ -25,7 +25,8 @@ def connect_vpn(vpn_config_file, auth_file):
             # Verifica si el proceso terminó
             if process.poll() is not None:
                 print("VPN process exited unexpectedly.")
-                return None
+                process.terminate()
+                return process
                 
             # Check for successful connection message
             if "Initialization Sequence Completed" in output:
