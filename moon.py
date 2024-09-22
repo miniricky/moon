@@ -264,6 +264,10 @@ def split_image(fixed_width=55, fixed_height=55):
     image_path = 'captcha/icons.png'
 
     image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: No se pudo cargar la imagen {image_path}")
+        return
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -288,8 +292,20 @@ def split_image(fixed_width=55, fixed_height=55):
         # Extract the icon area
         icon = image[y:y+h, x:x+w]
 
+        # Check if icon is larger than the fixed size
+        if w > fixed_width or h > fixed_height:
+            print(f"Redimensionando el ícono {icon_num} porque es más grande que el tamaño fijo.")
+            scale_w = fixed_width / w
+            scale_h = fixed_height / h
+            scale = min(scale_w, scale_h)  # Mantener proporciones
+
+            # Redimensionar el icono para ajustarlo
+            icon = cv2.resize(icon, (int(w * scale), int(h * scale)))
+            w, h = icon.shape[1], icon.shape[0]  # Actualizar el tamaño del ícono después de redimensionar
+
         background_color = (76, 76, 76)
 
+        # Create a background with fixed size
         centered_icon = np.full((fixed_height, fixed_width, 3), background_color, dtype=np.uint8)
 
         # Calculate the position to center the icon
@@ -304,7 +320,7 @@ def split_image(fixed_width=55, fixed_height=55):
         print(f"Icono {icon_num} guardado en 'captcha/icon_{icon_num}.png'")
         icon_num += 1
 
-    return icon_num
+    return icon_num  # Retornar el número de íconos procesados
 
 # Compare two images and return whether they are similar based on their histogram
 def compare_images(image1_path, image2_path, threshold=500):
