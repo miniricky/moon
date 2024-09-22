@@ -340,9 +340,13 @@ def main():
     ovpn_list = {
         1: "us-free-104063.protonvpn.udp.ovpn",
         2: "us-free-113078.protonvpn.udp.ovpn",
-        3: "us-free-110062.protonvpn.udp.ovpn",
+        3: "us-free-118021.protonvpn.udp.ovpn",
         4: "us-free-108069.protonvpn.udp.ovpn",
         5: "us-free-114155.protonvpn.udp.ovpn"
+    }
+
+    ovpn_error_list = {
+        3: "us-free-110062.protonvpn.udp.ovpn",
     }
 
     index = 0
