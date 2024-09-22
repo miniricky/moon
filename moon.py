@@ -384,7 +384,7 @@ def main():
             # Connect to the VPN
             vpn_process = connect_vpn(vpn_config, auth_file)
         
-        if not vpn_process:
+        if not vpn_process and index > 0:
             continue    
         
         # Get the public IP with ipinfo.io and geolocation information
