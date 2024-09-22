@@ -1,5 +1,4 @@
 import subprocess
-import time
 
 # Function to start the VPN connection
 def connect_vpn(vpn_config_file, auth_file):
@@ -17,16 +16,10 @@ def connect_vpn(vpn_config_file, auth_file):
         # Read and print stdout and stderr line by line in real-time
         while True:
             output = process.stdout.readline()
-            if "AUTH_FAILED" in output:
-                print("VPN Authentication failed.")
-                process.terminate()
-                return process
-                
-            # Verifica si el proceso terminó
-            if process.poll() is not None:
-                print("VPN process exited unexpectedly.")
-                process.terminate()
-                return process
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                print(f"OUTPUT: {output.strip()}")
                 
             # Check for successful connection message
             if "Initialization Sequence Completed" in output:
@@ -35,7 +28,6 @@ def connect_vpn(vpn_config_file, auth_file):
 
     except subprocess.TimeoutExpired:
         print("Timeout expired while connecting to VPN.")
-        time.sleep(5)
     except Exception as e:
         print(f"An error occurred: {e}")
     return None
