@@ -2,7 +2,7 @@ import subprocess
 import time
 
 # Function to start the VPN connection
-def connect_vpn(vpn_config_file, auth_file, max_attempts=5):
+def connect_vpn(vpn_config_file, auth_file, max_attempts=3):
     attempt_count = 0
 
     while attempt_count < max_attempts:
@@ -15,8 +15,6 @@ def connect_vpn(vpn_config_file, auth_file, max_attempts=5):
                 stderr=subprocess.PIPE,
                 text=True  # This will treat the output as text instead of bytes
             )
-            
-            print("Attempting to connect to VPN...")
             
             # Read and print stdout and stderr line by line in real-time
             while True:
@@ -38,13 +36,16 @@ def connect_vpn(vpn_config_file, auth_file, max_attempts=5):
                     break  # Break the inner while loop to try again
                 
             attempt_count += 1
-            time.sleep(5)  # Wait a few seconds before trying again
+            time.sleep(3)  # Wait a few seconds before trying again
 
         except subprocess.TimeoutExpired:
             print("Timeout expired while connecting to VPN.")
         except Exception as e:
             print(f"An error occurred: {e}")
-        return None
+    
+    # If all attempts fail, return None
+    print("Max attempts reached. Could not connect to VPN.")
+    return None
 
 # Function to disconnect from the VPN
 def disconnect_vpn(process):
