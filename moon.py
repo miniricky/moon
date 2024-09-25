@@ -354,17 +354,14 @@ def main():
     }
 
     ovpn_list = {
-        1: "us-free-104063.protonvpn.udp.ovpn",
-        2: "us-free-113078.protonvpn.udp.ovpn",
-        3: "us-free-118021.protonvpn.udp.ovpn",
-        4: "us-free-122016.protonvpn.udp.ovpn",
-        5: "us-free-114155.protonvpn.udp.ovpn"
+        1: "us-free-128051.protonvpn.udp.ovpn",
+        2: "us-free-133018.protonvpn.udp.ovpn",
+        3: "us-free-134034.protonvpn.udp.ovpn",
+        4: "us-free-136037.protonvpn.udp.ovpn",
+        5: "us-free-136038.protonvpn.udp.ovpn"
     }
 
-    ovpn_error_list = {
-        3: "us-free-110062.protonvpn.udp.ovpn",
-        4: "us-free-108069.protonvpn.udp.ovpn"
-    }
+    ovpn_error_list = {}
 
     index = 0
     count = len(profile_list)
@@ -376,15 +373,13 @@ def main():
        
         # Connect openvpn
         vpn_process = None
+        vpn_config = f'C:/Users/{user_name}/OpenVPN/config/{ovpn_list[index + 1]}'
+        auth_file = f'C:/Users/{user_name}/OpenVPN/config/credentials.txt'
 
-        if index > 0:
-            vpn_config = f'C:/Users/{user_name}/OpenVPN/config/{ovpn_list[index]}'
-            auth_file = f'C:/Users/{user_name}/OpenVPN/config/credentials.txt'
-
-            # Connect to the VPN
-            vpn_process = connect_vpn(vpn_config, auth_file)
+        # Connect to the VPN
+        vpn_process = connect_vpn(vpn_config, auth_file)
         
-        if not vpn_process and index > 0:
+        if not vpn_process:
             continue    
         
         # Get the public IP with ipinfo.io and geolocation information
