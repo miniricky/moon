@@ -418,7 +418,7 @@ def main():
         close_browser()
 
         if roll:
-            send_status_update(f'Claim: {user_name} - perfil {profile + 5} - región {country}.')
+            send_status_update(f'Claim: {user_name} - perfil {profile} - región {country}.')
 
         if vpn_process:
             disconnect_vpn(vpn_process)
