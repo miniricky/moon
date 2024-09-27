@@ -354,14 +354,16 @@ def main():
     }
 
     ovpn_list = {
-        1: "us-free-128051.protonvpn.udp.ovpn",
+        1: "us-free-138043.protonvpn.udp.ovpn",
         2: "us-free-133018.protonvpn.udp.ovpn",
         3: "us-free-134034.protonvpn.udp.ovpn",
         4: "us-free-136037.protonvpn.udp.ovpn",
         5: "us-free-136038.protonvpn.udp.ovpn"
     }
 
-    ovpn_error_list = {}
+    ovpn_error_list = {
+        1: "us-free-128051.protonvpn.udp.ovpn"
+    }
 
     index = 0
     count = len(profile_list)
